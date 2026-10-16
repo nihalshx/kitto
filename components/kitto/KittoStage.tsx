@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { Action, Expression } from "@/lib/kitto/expressions";
 import { STAGE_BACKGROUND } from "@/lib/kitto/moods";
 import KittoAvatar, { type LookTarget } from "./KittoAvatar";
+import KittoJump from "./KittoJump";
 
 const CONFETTI_COLORS = ["#F7D64A", "#B9AEE6", "#E5A0A7", "#ffffff", "#9FB08A", "#6d4fe0"];
 
@@ -60,12 +61,17 @@ export interface StageProps {
   score: number | null;
   confetti: number | null;
   hint: boolean;
+  /** Plays the side-view jump while set. */
+  jumping: boolean;
+  onJumpDone: () => void;
+  /** Tap the score stamp to share it. */
+  onShare: () => void;
   onTap: () => void;
   onPet: () => void;
 }
 
 export default function KittoStage(props: StageProps) {
-  const { background, bubble, score, confetti, hint, popKey, onTap, ...avatar } = props;
+  const { background, bubble, score, confetti, hint, popKey, jumping, onJumpDone, onShare, onTap, ...avatar } = props;
   return (
     <div
       onClick={onTap}
@@ -80,7 +86,8 @@ export default function KittoStage(props: StageProps) {
       />
       <div className="pointer-events-none absolute -bottom-2 h-4 w-[120px] rounded-[50%] bg-[#DDD7F2]/70 blur-[2px] sm:w-[170px]" aria-hidden="true" />
 
-      <div key={popKey} className="kitto-pop absolute -bottom-1 h-[124px] w-[116px] sm:h-[186px] sm:w-[174px]">
+      {jumping && <KittoJump onDone={onJumpDone} />}
+      <div key={popKey} style={{ opacity: jumping ? 0 : 1 }} className="kitto-pop absolute -bottom-1 h-[124px] w-[116px] sm:h-[186px] sm:w-[174px]">
         <KittoAvatar {...avatar} crop="bust" className="h-full w-full" />
       </div>
 
@@ -95,16 +102,22 @@ export default function KittoStage(props: StageProps) {
       )}
 
       {score !== null && (
-        <div
+        <button
+          type="button"
           key={`score-${score}-${popKey}`}
-          className="kitto-stamp pointer-events-none absolute top-3 left-4 grid h-16 w-16 rotate-[-8deg] place-items-center rounded-full border-[3px] border-[var(--kitto-violet)] bg-white text-[var(--kitto-violet)] shadow-md sm:top-5 sm:h-20 sm:w-20"
-          aria-hidden="true"
+          onClick={(e) => {
+            e.stopPropagation();
+            onShare();
+          }}
+          aria-label={`Score ${score} out of 10. Share it`}
+          className="kitto-stamp absolute top-3 left-4 grid h-16 w-16 rotate-[-8deg] place-items-center rounded-full border-[3px] border-[var(--kitto-violet)] bg-white text-[var(--kitto-violet)] shadow-md transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kitto-violet)] sm:top-5 sm:h-20 sm:w-20"
         >
           <span className="text-center leading-none">
             <span className="block text-2xl font-black sm:text-3xl">{score}</span>
             <span className="text-[10px] font-bold tracking-widest">/ 10</span>
+            <span className="mt-0.5 block text-[9px] font-semibold tracking-wide uppercase">share</span>
           </span>
-        </div>
+        </button>
       )}
 
       {confetti !== null && <Confetti key={confetti} seed={confetti} />}

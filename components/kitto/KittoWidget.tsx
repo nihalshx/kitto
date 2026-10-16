@@ -1,9 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getVisitorId, nudgeStorage, readStorage, sendChat, submitLead, writeStorage } from "@/lib/kitto/client";
 import { EXPRESSIONS, MOOD_ACTION, MOOD_EXPRESSION, type Action, type Expression } from "@/lib/kitto/expressions";
 import { MOOD_COLORS, type Mode, type Mood } from "@/lib/kitto/moods";
+import { playSound, setSoundEnabled, soundEnabled, type Sound } from "@/lib/kitto/sound";
 import ChatInput from "./ChatInput";
 import ChatMessages, { type ChatMessage } from "./ChatMessages";
 import KittoAvatar, { type LookTarget } from "./KittoAvatar";
@@ -11,6 +13,7 @@ import KittoStage from "./KittoStage";
 import KittoWalkIn from "./KittoWalkIn";
 import LeadForm, { type LeadValues } from "./LeadForm";
 import ModeChips from "./ModeChips";
+import ShareCard, { verdictFrom } from "./ShareCard";
 
 const GREETING =
   "Hey, I'm Kitto, Codifykit's brand buddy. I give ideas, talk through brand problems, and roast bios (lovingly). What are we working on?";
@@ -33,7 +36,7 @@ const LAUNCHER_NAP_AFTER_MS = 40_000;
 const HINT_KEY = "kitto.petHintDone";
 
 // Playful reactions (local, no AI call).
-type ReactionKind = "tap" | "pet" | "wake" | "hello" | "celebrate";
+type ReactionKind = "tap" | "pet" | "wake" | "hello" | "celebrate" | "back";
 const REACTIONS: Record<ReactionKind, { expr: Expression; action: Action; lines: string[]; ms: number }[]> = {
   tap: [
     { expr: EXPRESSIONS.excited, action: "hop", lines: ["mrrp!", "boop!", "hehe"], ms: 1300 },
@@ -44,7 +47,17 @@ const REACTIONS: Record<ReactionKind, { expr: Expression; action: Action; lines:
   wake: [{ expr: EXPRESSIONS.surprised, action: "shake", lines: ["huh? I'm up!", "wasn't sleeping", "…5 more mins"], ms: 1400 }],
   hello: [{ expr: EXPRESSIONS.purr, action: "wave", lines: ["hi!", "hello!", "oh hey!"], ms: 1400 }],
   celebrate: [{ expr: EXPRESSIONS.excited, action: "hop", lines: ["yay!", "woohoo!", "purr-fect"], ms: 1800 }],
+  back: [{ expr: EXPRESSIONS.excited, action: "hop", lines: ["oh, you're back!", "missed you!", "welcome back!"], ms: 1800 }],
 };
+const REACTION_SOUND: Record<ReactionKind, Sound> = {
+  tap: "mrrp",
+  pet: "purr",
+  wake: "wake",
+  hello: "hello",
+  celebrate: "celebrate",
+  back: "back",
+};
+const AWAY_TITLE = "Kitto misses you 😿";
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 
 // Tap Kitto lots of times quickly for a secret.
@@ -62,7 +75,7 @@ const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.
 export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }) {
   const [open, setOpen] = useState(false);
   const [nudge, setNudge] = useState(false);
-  const [walking, setWalking] = useState(false);
+  const [walking, setWalking] = useState<"edge" | "near" | null>(null);
   const [arrived, setArrived] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([{ id: "greeting", role: "assistant", text: GREETING }]);
   const [chips, setChips] = useState<string[]>(Object.keys(STARTER_CHIPS));
@@ -91,6 +104,12 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
   const [confetti, setConfetti] = useState<number | null>(null);
   const [hint, setHint] = useState(false);
   const [launcherHover, setLauncherHover] = useState(false);
+  const [jumping, setJumping] = useState(false);
+  const [lastRoast, setLastRoast] = useState<{ score: number; line: string } | null>(null);
+  const [sharing, setSharing] = useState<{ score: number; line: string } | null>(null);
+  const [sound, setSound] = useState(false);
+  const pathname = usePathname();
+  const [prevPath, setPrevPath] = useState(pathname);
 
   const visitorRef = useRef<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -101,6 +120,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
   const typingTimer = useRef<number | undefined>(undefined);
   const taps = useRef<number[]>([]);
   const asleepRef = useRef(false);
+  const openedOnce = useRef(false);
   const busy = thinking || talking;
 
   const playAction = useCallback((name: Action) => setAction({ name, id: Date.now() + Math.random() }), []);
@@ -113,6 +133,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
       setReaction(r.expr);
       playAction(r.action);
       say(pick(r.lines));
+      playSound(REACTION_SOUND[kind]);
       window.clearTimeout(reactionTimer.current);
       reactionTimer.current = window.setTimeout(() => setReaction(null), r.ms);
     },
@@ -155,19 +176,66 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
     const t = window.setTimeout(() => {
       nudgeStorage.markSeen();
       if (reducedMotion()) setNudge(true);
-      else setWalking(true);
+      else setWalking("edge");
     }, NUDGE_DELAY_MS);
     return () => window.clearTimeout(t);
   }, []);
 
   const onArrive = useCallback(() => {
-    setWalking(false);
+    setWalking((w) => {
+      if (w === "edge") setNudge(true);
+      return null;
+    });
     setArrived(true);
-    setNudge(true);
     window.setTimeout(() => setArrived(false), 700);
   }, []);
 
+  // Navigating to another page: Kitto strolls over to the new page with you.
+  if (pathname !== prevPath) {
+    setPrevPath(pathname);
+    if (!open && !walking && !reducedMotion()) setWalking("near");
+  }
+
+  // Sound preference (off by default) is read after mount.
+  useEffect(() => {
+    const t = window.setTimeout(() => setSound(soundEnabled()), 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  function toggleSound() {
+    const next = !sound;
+    setSound(next);
+    setSoundEnabled(next);
+    if (next) playSound("mrrp");
+  }
+
+  // Switching tabs: Kitto dozes off, and is delighted when you come back.
+  useEffect(() => {
+    const original = document.title;
+    const onVisibility = () => {
+      if (document.hidden) {
+        asleepRef.current = true;
+        setAsleep(true);
+        if (openedOnce.current) document.title = AWAY_TITLE;
+      } else {
+        if (document.title === AWAY_TITLE) document.title = original;
+        lastActive.current = Date.now();
+        if (asleepRef.current) {
+          asleepRef.current = false;
+          setAsleep(false);
+          if (!sensitive) react("back");
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (document.title === AWAY_TITLE) document.title = original;
+    };
+  }, [react, sensitive]);
+
   function openPanel() {
+    openedOnce.current = true;
     setNudge(false);
     setOpen(true);
     setHint(readStorage(HINT_KEY) !== "1");
@@ -207,9 +275,15 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
     [playAction],
   );
 
-  function celebrate() {
+  function celebrate(big = false) {
     react("celebrate");
-    if (!reducedMotion()) setConfetti(Date.now());
+    if (reducedMotion()) return;
+    setConfetti(Date.now());
+    if (big) setJumping(true);
+  }
+
+  function openShare() {
+    if (lastRoast) setSharing(lastRoast);
   }
 
   function doneHint() {
@@ -266,7 +340,9 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
       try {
         visitorRef.current ??= await getVisitorId();
         let started = false;
+        let replyText = "";
         const onText = (chunk: string) => {
+          replyText += chunk;
           if (!started) {
             started = true;
             setThinking(false);
@@ -300,7 +376,8 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
           setChips(hideChips ? [] : meta.chips);
           if (meta.roastScore !== null) {
             setScore(meta.roastScore);
-            if (meta.roastScore >= 8) celebrate();
+            setLastRoast({ score: meta.roastScore, line: verdictFrom(replyText) });
+            if (meta.roastScore >= 8) celebrate(meta.roastScore >= 9);
           }
           if (meta.intent === "lead" && !leadSent) {
             // Pre-fill "what you need" with the message that triggered the offer, unless it was a chip.
@@ -344,6 +421,10 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
 
   function pickChip(chip: string) {
     setChipHover(false);
+    if (/share my score/i.test(chip) && lastRoast) {
+      openShare();
+      return;
+    }
     send(chip, STARTER_CHIPS[chip]);
   }
 
@@ -355,7 +436,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
     setLeadSent(true);
     setNapping(false);
     changeMood("happy");
-    celebrate();
+    celebrate(true);
     setMessages((m) => [
       ...m,
       {
@@ -391,7 +472,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
 
   return (
     <div className="kitto-root">
-      {walking && <KittoWalkIn onArrive={onArrive} />}
+      {walking && <KittoWalkIn from={walking} onArrive={onArrive} />}
 
       {/* Launcher */}
       {!open && (
@@ -436,9 +517,22 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
             <span className="ml-1 truncate text-[12px] text-white/70">brand buddy by Codifykit</span>
             <button
               type="button"
+              onClick={toggleSound}
+              aria-pressed={sound}
+              aria-label={sound ? "Turn Kitto's sounds off" : "Turn Kitto's sounds on"}
+              title={sound ? "Sounds on" : "Sounds off"}
+              className="ml-auto grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" />
+                {sound ? <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /> : <path d="M17 9l5 6M22 9l-5 6" />}
+              </svg>
+            </button>
+            <button
+              type="button"
               onClick={closePanel}
               aria-label="Close chat"
-              className="ml-auto grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white"
+              className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white"
             >
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" />
@@ -459,6 +553,9 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
             score={score}
             confetti={confetti}
             hint={hint}
+            jumping={jumping}
+            onJumpDone={() => setJumping(false)}
+            onShare={openShare}
             onTap={onTap}
             onPet={onPet}
           />
@@ -490,6 +587,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
           </div>
 
           <ChatInput onSend={(t) => send(t)} onTyping={onTyping} disabled={busy} showPrivacy={!conversationId} />
+          {sharing && <ShareCard score={sharing.score} line={sharing.line} onClose={() => setSharing(null)} />}
         </div>
       )}
     </div>

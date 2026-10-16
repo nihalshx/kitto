@@ -1,16 +1,10 @@
+import SiteHeader from "@/components/site/SiteHeader";
+
 // Demo host page for the Kitto widget. On the real site, the widget mounts in the root layout of codifykit's pages.
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-5">
-        <span className="text-lg font-bold tracking-tight">Codifykit</span>
-        <nav className="hidden gap-6 text-sm text-zinc-600 sm:flex dark:text-zinc-400">
-          <span>Websites</span>
-          <span>CRM &amp; ERP</span>
-          <span>Social</span>
-          <span>Branding</span>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-6 px-4 pt-10 pb-28">
         <p className="text-sm font-semibold tracking-wide text-violet-700 uppercase dark:text-violet-300">

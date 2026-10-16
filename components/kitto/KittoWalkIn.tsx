@@ -9,7 +9,7 @@ const FRAME_MS = 80;
 const SPEED_PX_PER_S = 260;
 const SIZE = 150; // rendered height in px (frames are 640 x 560)
 
-export default function KittoWalkIn({ onArrive }: { onArrive: () => void }) {
+export default function KittoWalkIn({ onArrive, from = "edge" }: { onArrive: () => void; from?: "edge" | "near" }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const arriveRef = useRef(onArrive);
@@ -28,7 +28,8 @@ export default function KittoWalkIn({ onArrive }: { onArrive: () => void }) {
 
     const width = (SIZE * 640) / 560;
     const end = window.innerWidth - 24 - 64 - width * 0.55; // stop just left of the launcher
-    const start = -width;
+    // "near": a short stroll (page changes); "edge": all the way from the left (first visit).
+    const start = from === "near" ? Math.max(-width, end - 380) : -width;
     const duration = ((end - start) / SPEED_PX_PER_S) * 1000;
     const t0 = performance.now();
     let frame = 0;
@@ -48,7 +49,7 @@ export default function KittoWalkIn({ onArrive }: { onArrive: () => void }) {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [from]);
 
   return (
     <div ref={wrapRef} className="pointer-events-none fixed bottom-2 left-0 z-40" style={{ transform: "translateX(-200px)" }} aria-hidden="true">

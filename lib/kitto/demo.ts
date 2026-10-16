@@ -42,7 +42,9 @@ function roast(message: string): string {
   const pasted = message.replace(/^.*?(roast( my)?( bio| tagline| caption)?:?)/i, "").replace(/["“”]/g, "").trim() || message;
   const lower = pasted.toLowerCase();
   const found = BUZZWORDS.filter((w) => lower.includes(w));
-  const score = Math.max(2, Math.min(9, 8 - found.length * 2 + (pasted.length > 160 ? -1 : 0)));
+  // A concrete number (a proof point) earns a bonus.
+  const proof = /\d/.test(pasted) ? 1 : 0;
+  const score = Math.max(2, Math.min(9, 8 - found.length * 2 + proof + (pasted.length > 160 ? -1 : 0)));
 
   const observation = found.length
     ? `"${found.slice(0, 2).join('" and "')}" could describe a bakery, a bank or a plumber. I read it twice and still don't know what you actually do.`

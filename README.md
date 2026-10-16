@@ -12,7 +12,8 @@ A black-cat chat buddy for the Codifykit website: brand ideas, brand therapy, ro
 | 4. Chat widget with the interactive Kitto v3 avatar | Done |
 | 5. `/api/lead`, lead form, email alert | Done (email needs `RESEND_API_KEY`) |
 | 6. Rate limiting + error fallbacks | Done |
-| 7–11 | Not started |
+| 8. Share card route and button | Done |
+| 7, 9–11 | Not started |
 
 ## Kitto artwork and interactions
 
@@ -33,6 +34,13 @@ The stage follows the v3 character sheet: an off-white backdrop with a soft circ
 | Lead sent | excited, hop, confetti |
 
 Play: eyes and head follow the pointer, she glances at the input while you type and at chips you hover, tap her for reactions, stroke her to make her purr, tap 6 times quickly for a secret tip, leave her alone for 25 s and she naps (moving wakes her with a start). First visit: she walks along the bottom of the page to the chat button (side-view walk cycle in `public/kitto/walk/`). Idle fidgets: tail flicks, ear twitches, head tilts, looking around. Everything stops for `prefers-reduced-motion`, and jokes stop after a sensitive message.
+
+More play:
+- **Share card** (`/api/share-card?score=&line=`, PRD F9): 1080×1350 PNG with Kitto's face picked by score, the verdict and Codifykit. Tap the score stamp or the "Share my score" chip; it uses the phone's share sheet, or downloads.
+- **Jump**: the kit's side-view jump plays across the stage for 9–10 scores and sent leads.
+- **Page walks**: on navigation Kitto strolls over to the chat button on the new page.
+- **Sounds** (off by default, speaker button in the header): synthesized mrrp, purr, hello and celebration sounds via Web Audio, no audio files.
+- **Tab away**: she dozes off (and the tab title becomes "Kitto misses you 😿" once the chat has been opened); coming back gets "oh, you're back!".
 
 When `kitto.riv` is built from the rig, it can replace the SVG in `KittoAvatar`; the expression and action names already match the kit's state-machine inputs.
 
