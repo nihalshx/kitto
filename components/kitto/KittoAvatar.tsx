@@ -1,108 +1,189 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Mood } from "@/lib/kitto/moods";
 
-// Placeholder Kitto drawn in SVG until the commissioned artwork and kitto.riv land
-// (PRD section 7). Same props the Rive version will take, so it can be swapped in.
+// Kitto, built from the black-cat kit rig (design/kitto-kit/black_cat_fullbody_rig.svg).
+// Same layer names as the rig, so it maps 1:1 to the future kitto.riv. CSS drives
+// the idle loop, blink, thinking, talking and mood-change animations.
+
+type Face = "default" | "neutral" | "look_right" | "sleepy" | "gold" | "happy" | "blink";
+
+const MOOD_FACE: Record<Mood, Face> = {
+  curious: "default",
+  helpful: "neutral",
+  unimpressed: "sleepy",
+  fluff_cutter: "gold",
+  happy: "happy",
+};
+
+// Crops of the 500 x 800 artboard.
+const VIEWBOX = {
+  full: "0 0 500 800",
+  bust: "40 0 420 460",
+  head: "112 0 276 330",
+} as const;
+
+const INK = "#0B0B0B";
+const WHITE = "#FFFFFF";
+
+function RoundEyes({ px, py, rx, ry }: { px: number; py: number; rx: number; ry: number }) {
+  return (
+    <>
+      <ellipse cx="200" cy="200" rx="34" ry="39" fill={WHITE} transform="rotate(-6 200 200)" />
+      <ellipse cx={200 + px} cy={200 + py} rx={rx} ry={ry} fill={INK} />
+      <ellipse cx="300" cy="200" rx="34" ry="39" fill={WHITE} transform="rotate(6 300 200)" />
+      <ellipse cx={300 + px} cy={200 + py} rx={rx} ry={ry} fill={INK} />
+    </>
+  );
+}
+
+function Eyes({ face }: { face: Face }) {
+  switch (face) {
+    case "default":
+      return <RoundEyes px={-12} py={0} rx={10} ry={12} />;
+    case "neutral":
+      return <RoundEyes px={0} py={2} rx={9} ry={11} />;
+    case "look_right":
+      return <RoundEyes px={12} py={-6} rx={10} ry={12} />;
+    case "sleepy":
+      return (
+        <>
+          <RoundEyes px={0} py={14} rx={11} ry={13} />
+          <path d="M160,155 H240 V202 L160,198 Z" fill={INK} />
+          <path d="M260,155 H340 V198 L260,202 Z" fill={INK} />
+        </>
+      );
+    case "gold":
+      return (
+        <>
+          <circle cx="200" cy="200" r="31" fill={INK} stroke="#D9A21E" strokeWidth="7" />
+          <circle cx="211" cy="190" r="6" fill={WHITE} />
+          <circle cx="300" cy="200" r="31" fill={INK} stroke="#D9A21E" strokeWidth="7" />
+          <circle cx="311" cy="190" r="6" fill={WHITE} />
+        </>
+      );
+    case "happy":
+      return (
+        <g fill="none" stroke={WHITE} strokeWidth="8" strokeLinecap="round">
+          <path d="M178,208 Q200,180 222,208" />
+          <path d="M278,208 Q300,180 322,208" />
+        </g>
+      );
+    case "blink":
+      return <path d="M176,204 H224 M276,204 H324" stroke={WHITE} strokeWidth="6" strokeLinecap="round" />;
+  }
+}
+
+/** The fluff-cutter prop: a red pen held in the mouth (PRD: never the kit's knife). */
+function RedPen() {
+  return (
+    <g className="kitto-prop" transform="rotate(-3 250 268)">
+      {/* nib */}
+      <path d="M418,256 L460,268 L418,280 Z" fill="#F3E3C3" stroke="#1A1A1A" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M448,265 L460,268 L448,271 Z" fill="#D7263D" />
+      {/* barrel */}
+      <rect x="196" y="250" width="226" height="36" rx="10" fill="#D7263D" stroke="#1A1A1A" strokeWidth="3" />
+      <path d="M214,260 H404" stroke="#F06A7A" strokeWidth="4" strokeLinecap="round" />
+      {/* cap end + clip */}
+      <rect x="128" y="248" width="78" height="40" rx="10" fill="#8E1526" stroke="#1A1A1A" strokeWidth="3" />
+      <rect x="150" y="240" width="46" height="9" rx="4" fill="#C9CDD2" stroke="#1A1A1A" strokeWidth="2.5" />
+    </g>
+  );
+}
 
 interface Props {
   mood: Mood;
   thinking?: boolean;
   talking?: boolean;
+  waving?: boolean;
+  crop?: keyof typeof VIEWBOX;
   className?: string;
 }
 
-const EYES = { left: 72, right: 128, y: 112 };
+export default function KittoAvatar({ mood, thinking = false, talking = false, waving = false, crop = "bust", className }: Props) {
+  const [blinking, setBlinking] = useState(false);
 
-function Eyes({ mood, thinking }: { mood: Mood; thinking: boolean }) {
-  if (mood === "happy") {
-    return (
-      <g stroke="#fff" strokeWidth="5" strokeLinecap="round" fill="none">
-        <path d={`M${EYES.left - 14} 116 Q${EYES.left} 100 ${EYES.left + 14} 116`} />
-        <path d={`M${EYES.right - 14} 116 Q${EYES.right} 100 ${EYES.right + 14} 116`} />
+  // Blink every 3–6 s (PRD section 7), unless the visitor prefers reduced motion.
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        setBlinking(true);
+        timer = setTimeout(() => {
+          setBlinking(false);
+          schedule();
+        }, 180);
+      }, 3000 + Math.random() * 3000);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, []);
+
+  let face: Face = thinking ? "look_right" : MOOD_FACE[mood];
+  // Closed-eye faces don't blink.
+  if (blinking && face !== "happy" && face !== "sleepy") face = "blink";
+
+  const state = [thinking && "is-thinking", talking && "is-talking", waving && "is-waving", `mood-${mood}`]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <svg viewBox={VIEWBOX[crop]} className={`kitto-cat ${state} ${className ?? ""}`} aria-hidden="true" focusable="false">
+      <g className="kitto-shadow">
+        <ellipse cx="255" cy="768" rx="165" ry="13" fill="#000" opacity="0.18" />
       </g>
-    );
-  }
-
-  const shape = {
-    curious: { rx: 20, ry: 23, pr: 11, fill: "#fff" },
-    helpful: { rx: 18, ry: 16, pr: 8, fill: "#fff" },
-    unimpressed: { rx: 19, ry: 17, pr: 8, fill: "#fff" },
-    fluff_cutter: { rx: 21, ry: 22, pr: 0, fill: "#E8B923" },
-  }[mood];
-
-  const look = thinking ? { dx: 5, dy: -9 } : mood === "unimpressed" ? { dx: 0, dy: 6 } : { dx: 0, dy: 1 };
-
-  return (
-    <g className="kitto-eyes">
-      {[EYES.left, EYES.right].map((x) => (
-        <g key={x}>
-          <ellipse cx={x} cy={EYES.y} rx={shape.rx} ry={shape.ry} fill={shape.fill} />
-          {mood === "fluff_cutter" ? (
-            <ellipse cx={x} cy={EYES.y} rx="4" ry="15" fill="#111" />
-          ) : (
-            <>
-              <circle cx={x + look.dx} cy={EYES.y + look.dy} r={shape.pr} fill="#111" />
-              <circle cx={x + look.dx + 3} cy={EYES.y + look.dy - 3} r="2.5" fill="#fff" />
-            </>
-          )}
-          {mood === "unimpressed" && (
-            // Half-lidded: the black lid covers the top half of the eye.
-            <rect x={x - 24} y={EYES.y - 26} width="48" height="26" fill="#141414" />
-          )}
-        </g>
-      ))}
-    </g>
-  );
-}
-
-function Mouth({ mood }: { mood: Mood }) {
-  if (mood === "unimpressed" || mood === "fluff_cutter") {
-    return <path d="M90 152 L110 152" stroke="#fff" strokeOpacity=".8" strokeWidth="3" strokeLinecap="round" />;
-  }
-  if (mood === "happy") {
-    return <path d="M88 148 Q100 162 112 148" stroke="#fff" strokeOpacity=".9" strokeWidth="3" fill="none" strokeLinecap="round" />;
-  }
-  return (
-    <path d="M90 149 Q95 155 100 149 Q105 155 110 149" stroke="#fff" strokeOpacity=".8" strokeWidth="3" fill="none" strokeLinecap="round" />
-  );
-}
-
-export default function KittoAvatar({ mood, thinking = false, talking = false, className }: Props) {
-  return (
-    <svg
-      viewBox="0 0 200 200"
-      className={`${className ?? ""} ${talking ? "kitto-talking" : ""} ${thinking ? "kitto-thinking" : ""}`}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <g className="kitto-body">
-        {/* ears */}
-        <path d="M38 92 L50 22 L96 64 Z" fill="#141414" />
-        <path d="M162 92 L150 22 L104 64 Z" fill="#141414" />
-        <path d="M50 76 L56 40 L80 62 Z" fill="#3a3a3a" />
-        <path d="M150 76 L144 40 L120 62 Z" fill="#3a3a3a" />
-        {/* head */}
-        <ellipse cx="100" cy="116" rx="72" ry="62" fill="#141414" />
-        <Eyes mood={mood} thinking={thinking} />
-        {/* nose */}
-        <path d="M95 136 L105 136 L100 142 Z" fill="#555" />
-        <Mouth mood={mood} />
-        {/* whiskers */}
-        <g stroke="#fff" strokeOpacity=".55" strokeWidth="1.5" strokeLinecap="round">
-          <path d="M40 132 L74 138" />
-          <path d="M38 144 L74 144" />
-          <path d="M160 132 L126 138" />
-          <path d="M162 144 L126 144" />
-        </g>
-        {mood === "fluff_cutter" && (
-          // The red pen prop (PRD: scissors or a red pen, never a knife).
-          <g transform="rotate(-35 168 168)">
-            <g className="kitto-prop">
-              <rect x="140" y="160" width="58" height="12" rx="3" fill="#D7263D" />
-              <rect x="140" y="160" width="14" height="12" rx="2" fill="#8E1526" />
-              <path d="M198 160 L210 166 L198 172 Z" fill="#f4e4c1" />
-            </g>
+      <g transform="translate(0,20)">
+        <g className="kitto-root-group">
+          <g className="kitto-tail">
+            <path d="M352,712 C430,722 455,660 432,604 C422,578 398,586 406,604" fill="none" stroke={INK} strokeWidth="26" strokeLinecap="round" />
           </g>
-        )}
+          <g className="kitto-body">
+            <g fill={INK}>
+              <ellipse cx="168" cy="672" rx="58" ry="74" />
+              <ellipse cx="332" cy="672" rx="58" ry="74" />
+            </g>
+            <path
+              d="M200,288 C196,345 168,400 152,470 C134,550 124,640 136,700 C146,738 200,746 250,746 C300,746 354,738 364,700 C376,640 366,550 348,470 C332,400 304,345 300,288 Z"
+              fill={INK}
+            />
+            <path
+              d="M250,600 L250,728 M206,610 C196,660 200,700 210,730 M294,610 C304,660 300,700 290,730"
+              fill="none"
+              stroke="#262626"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+          </g>
+          <g className="kitto-leg-r">
+            <path d="M254,470 C254,590 256,670 257,732 L285,732 C286,670 288,590 288,470 Z" fill={INK} />
+            <ellipse cx="271" cy="736" rx="22" ry="12" fill={INK} stroke="#262626" strokeWidth="2.5" />
+          </g>
+          <g className="kitto-leg-l">
+            <path d="M212,470 C212,590 214,670 215,732 L243,732 C244,670 246,590 246,470 Z" fill={INK} />
+            <ellipse cx="229" cy="736" rx="22" ry="12" fill={INK} stroke="#262626" strokeWidth="2.5" />
+          </g>
+          <g className="kitto-head">
+            <path
+              d="M250,108 C278,108 296,96 306,78 L338,20 C354,58 368,110 373,155 C388,202 383,262 346,296 C322,318 282,324 250,324 C218,324 178,318 154,296 C117,262 112,202 127,155 C132,110 146,58 162,20 L194,78 C204,96 222,108 250,108 Z"
+              fill={INK}
+            />
+            <g className="kitto-whiskers" fill="none" stroke={INK} strokeWidth="3.2" strokeLinecap="round">
+              <path d="M170,238 Q110,226 58,222" />
+              <path d="M170,250 Q108,248 54,252" />
+              <path d="M170,262 Q114,270 66,284" />
+              <path d="M330,238 Q390,226 442,222" />
+              <path d="M330,250 Q392,248 446,252" />
+              <path d="M330,262 Q386,270 434,284" />
+            </g>
+            <g className="kitto-eyes">
+              <Eyes face={face} />
+            </g>
+            <ellipse cx="250" cy="247" rx="6" ry="3.5" fill={WHITE} />
+            {mood === "fluff_cutter" && !thinking && <RedPen />}
+          </g>
+        </g>
       </g>
     </svg>
   );

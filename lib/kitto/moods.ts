@@ -10,10 +10,11 @@ export const INTENTS = ["none", "lead", "sensitive"] as const;
 export type Intent = (typeof INTENTS)[number];
 
 export const MOOD_COLORS: Record<Mood, string> = {
-  curious: "#4A5A8C",
-  helpful: "#A3B48A",
-  unimpressed: "#A3313A",
-  fluff_cutter: "#F2CF4A",
+  // Palette from the black-cat art kit; happy keeps Codifykit lavender.
+  curious: "#4E6390",
+  helpful: "#9FB08A",
+  unimpressed: "#A8303A",
+  fluff_cutter: "#F7D64A",
   happy: "#B9A8E8",
 };
 

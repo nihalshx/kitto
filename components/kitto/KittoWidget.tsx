@@ -45,6 +45,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
   const [demo, setDemo] = useState(demoMode);
   const [lastFailed, setLastFailed] = useState<string | null>(null);
   const [popKey, setPopKey] = useState(0);
+  const [waving, setWaving] = useState(false);
 
   const visitorRef = useRef<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,19 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
     }, NUDGE_DELAY_MS);
     return () => clearTimeout(t);
   }, []);
+
+  // Paw wave when the panel opens (greeting).
+  useEffect(() => {
+    if (!waving) return;
+    const t = setTimeout(() => setWaving(false), 1300);
+    return () => clearTimeout(t);
+  }, [waving]);
+
+  function openPanel() {
+    setNudge(false);
+    setWaving(true);
+    setOpen(true);
+  }
 
   // Escape closes the panel; focus moves into the panel on open and back on close.
   useEffect(() => {
@@ -201,10 +215,7 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
           {nudge && (
             <button
               type="button"
-              onClick={() => {
-                setNudge(false);
-                setOpen(true);
-              }}
+              onClick={openPanel}
               className="kitto-nudge relative max-w-[220px] rounded-2xl rounded-br-sm bg-white px-4 py-2.5 text-left text-sm font-medium text-[var(--kitto-ink)] shadow-lg ring-1 ring-black/5"
             >
               Psst. Want me to roast your bio?
@@ -213,15 +224,12 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
           <button
             ref={launcherRef}
             type="button"
-            onClick={() => {
-              setNudge(false);
-              setOpen(true);
-            }}
+            onClick={openPanel}
             aria-label="Chat with Kitto"
             className={`kitto-launcher grid h-16 w-16 place-items-center overflow-hidden rounded-full shadow-xl ring-2 ring-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--kitto-violet)] ${nudge ? "kitto-wave" : ""}`}
             style={{ background: "var(--kitto-gradient)" }}
           >
-            <KittoAvatar mood="curious" className="mt-3 h-16 w-16" />
+            <KittoAvatar mood="curious" crop="head" className="mt-2 h-[60px] w-[60px]" />
           </button>
         </div>
       )}
@@ -256,10 +264,10 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
           </div>
 
           {/* Avatar stage */}
-          <div className="kitto-stage relative grid h-[120px] shrink-0 place-items-center sm:h-[180px]" style={{ backgroundColor: bg }}>
+          <div className="kitto-stage relative flex h-[120px] shrink-0 justify-center overflow-hidden sm:h-[180px]" style={{ backgroundColor: bg }}>
             <div className="kitto-grain pointer-events-none absolute inset-0" aria-hidden="true" />
-            <div key={popKey} className="kitto-pop relative h-[110px] w-[110px] sm:h-[160px] sm:w-[160px]">
-              <KittoAvatar mood={mood} thinking={thinking} talking={talking} className="h-full w-full drop-shadow-[0_6px_10px_rgba(0,0,0,0.25)]" />
+            <div key={popKey} className="kitto-pop absolute bottom-0 h-[114px] w-[104px] sm:h-[172px] sm:w-[157px]">
+              <KittoAvatar mood={mood} thinking={thinking} talking={talking} waving={waving} className="h-full w-full" />
             </div>
           </div>
 

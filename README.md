@@ -9,10 +9,25 @@ A black-cat chat buddy for the Codifykit website: brand ideas, brand therapy, ro
 | 1. Next.js + TS + Tailwind project | Done |
 | 2. Supabase schema migration with RLS | Done (`supabase/migrations/`) |
 | 3. `/api/chat` with streaming + metadata parsing | Done (and `/api/session`) |
-| 4. Chat widget (placeholder SVG moods until the art lands) | Done |
+| 4. Chat widget with the black-cat kit avatar (SVG, CSS animation) | Done |
 | 5. `/api/lead`, lead form, email alert | Done (email needs `RESEND_API_KEY`) |
 | 6. Rate limiting + error fallbacks | Done |
 | 7–11 | Not started |
+
+## Kitto artwork
+
+`design/kitto-kit/` holds the black-cat kit: the full-body rig SVG (named layers for Rive), expressions, poses, side view, walk and jump frames, and `RIVE_SETUP.md`. `components/kitto/KittoAvatar.tsx` renders the rig directly: blink every 3–6 s, breathing, tail sway, head tilt while thinking, head bob while talking, paw wave on open, a happy bounce, and reduced-motion support.
+
+| Kitto mood | Kit face |
+| --- | --- |
+| curious | eyes_default |
+| helpful | eyes_neutral |
+| unimpressed | eyes_sleepy |
+| fluff_cutter | eyes_gold + **red pen** (the kit's knife is not used, per the PRD) |
+| happy | eyes_happy |
+| thinking | eyes_look_right + head tilt |
+
+When `kitto.riv` is built from the rig, swap it into `KittoAvatar` and keep this SVG version as the fallback.
 
 ## Demo mode
 

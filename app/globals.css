@@ -62,24 +62,51 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .kitto-eyes {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: kitto-blink 4.6s infinite;
+  /* Avatar rig: pivots are in rig (artboard) coordinates. */
+  .kitto-cat g {
+    transform-box: view-box;
   }
-  .kitto-talking .kitto-body {
-    transform-origin: 100px 180px;
-    animation: kitto-bob 0.6s ease-in-out infinite;
+  .kitto-body {
+    transform-origin: 250px 744px;
+    animation: kitto-breathe 3s ease-in-out infinite;
   }
-  .kitto-thinking .kitto-body {
-    transform-origin: 100px 180px;
-    animation: kitto-tilt 1.5s ease-in-out infinite;
+  .kitto-tail {
+    transform-origin: 352px 712px;
+    animation: kitto-tail-sway 3s ease-in-out infinite;
   }
-  .kitto-pop {
-    animation: kitto-pop 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
+  .kitto-head {
+    transform-origin: 250px 300px;
+    animation: kitto-head-idle 3s ease-in-out infinite;
+  }
+  .kitto-cat.is-thinking .kitto-head {
+    animation: kitto-head-tilt 1.5s ease-in-out infinite;
+  }
+  .kitto-cat.is-thinking .kitto-tail {
+    animation-duration: 1.5s;
+  }
+  .kitto-cat.is-talking .kitto-head {
+    animation: kitto-head-bob 0.6s ease-in-out infinite;
+  }
+  .kitto-leg-l {
+    transform-origin: 229px 470px;
+  }
+  .kitto-cat.is-waving .kitto-leg-l {
+    animation: kitto-paw-wave 1.2s ease-in-out;
+  }
+  .kitto-root-group {
+    transform-origin: 250px 744px;
+  }
+  .kitto-cat.mood-happy .kitto-root-group {
+    animation: kitto-happy-bounce 0.8s ease-out;
+  }
+  .kitto-cat.mood-unimpressed .kitto-tail {
+    animation: kitto-tail-swish 1s ease-in-out;
   }
   .kitto-prop {
     animation: kitto-slide 400ms ease-out;
+  }
+  .kitto-pop {
+    animation: kitto-pop 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
   }
   .kitto-dots i {
     animation: kitto-dot 1.2s infinite ease-in-out;
@@ -104,17 +131,44 @@ body {
   }
 }
 
-@keyframes kitto-blink {
-  0%, 94%, 100% { transform: scaleY(1); }
-  97% { transform: scaleY(0.1); }
+@keyframes kitto-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.015); }
 }
-@keyframes kitto-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px) rotate(-1deg); }
+@keyframes kitto-tail-sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
 }
-@keyframes kitto-tilt {
+@keyframes kitto-head-idle {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+@keyframes kitto-head-tilt {
   0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-4deg); }
+  40%, 70% { transform: rotate(10deg); }
+}
+@keyframes kitto-head-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-1.5deg); }
+}
+@keyframes kitto-paw-wave {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(128deg); }
+  50% { transform: rotate(110deg); }
+  70% { transform: rotate(128deg); }
+}
+@keyframes kitto-happy-bounce {
+  0% { transform: none; }
+  12% { transform: scale(1.1, 0.86); }
+  38% { transform: translateY(-30px) scale(0.97, 1.04); }
+  62% { transform: translateY(-34px); }
+  85% { transform: scale(1.06, 0.92); }
+  100% { transform: none; }
+}
+@keyframes kitto-tail-swish {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(18deg); }
+  60% { transform: rotate(-10deg); }
 }
 @keyframes kitto-pop {
   0% { transform: scale(0.88, 1.08); }
