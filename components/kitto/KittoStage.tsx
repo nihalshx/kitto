@@ -75,12 +75,12 @@ export default function KittoStage(props: StageProps) {
   return (
     <div
       onClick={onTap}
-      className="kitto-stage relative flex h-[120px] shrink-0 cursor-pointer select-none justify-center overflow-hidden sm:h-[180px]"
-      style={{ backgroundColor: STAGE_BACKGROUND }}
+      className="kitto-stage relative mx-3 flex h-[132px] shrink-0 cursor-pointer select-none justify-center overflow-hidden rounded-[24px] ring-1 ring-black/[0.04] sm:h-[188px]"
+      style={{ background: `radial-gradient(120% 90% at 50% 0%, #FFFFFF 0%, ${STAGE_BACKGROUND} 70%)` }}
     >
       {/* Mood-tinted circle behind Kitto, as on the character sheet */}
       <div
-        className="kitto-blob pointer-events-none absolute top-3 h-[150px] w-[150px] rounded-full sm:top-4 sm:h-[220px] sm:w-[220px]"
+        className="kitto-blob pointer-events-none absolute top-4 h-[150px] w-[150px] rounded-full sm:top-5 sm:h-[220px] sm:w-[220px]"
         style={{ backgroundColor: background }}
         aria-hidden="true"
       />
@@ -123,7 +123,7 @@ export default function KittoStage(props: StageProps) {
       {confetti !== null && <Confetti key={confetti} seed={confetti} />}
 
       {hint && (
-        <span className="pointer-events-none absolute right-3 bottom-2 rounded-full bg-[#DDD7F2] px-2 py-0.5 text-[11px] font-medium text-[#46416B]">
+        <span className="pointer-events-none absolute right-3 bottom-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-[var(--kitto-deep)] shadow-sm ring-1 ring-black/5">
           tap or pet me
         </span>
       )}

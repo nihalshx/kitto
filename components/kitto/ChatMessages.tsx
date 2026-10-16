@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import KittoFace from "./KittoFace";
 
 export interface ChatMessage {
   id: string;
@@ -51,30 +52,45 @@ function renderText(text: string): ReactNode[] {
 
 export default function ChatMessages({ messages, thinking }: { messages: ChatMessage[]; thinking: boolean }) {
   return (
-    <div className="flex flex-col gap-2 px-4 py-3" role="log" aria-live="polite" aria-relevant="additions">
-      {messages.map((m) =>
-        m.role === "user" ? (
-          <div key={m.id} className="max-w-[85%] self-end whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-[var(--kitto-ink)] px-3.5 py-2 text-[15px] leading-snug text-white">
-            {m.text}
+    <div className="flex flex-col gap-1.5 px-4 pt-4 pb-3" role="log" aria-live="polite" aria-relevant="additions">
+      {messages.map((m, i) => {
+        if (m.role === "user") {
+          return (
+            <div
+              key={m.id}
+              className="mt-1.5 max-w-[80%] self-end whitespace-pre-wrap break-words rounded-[20px] rounded-br-md bg-[var(--kitto-deep)] px-4 py-2.5 text-[15px] leading-snug text-white shadow-[0_6px_16px_-8px_rgba(70,65,107,0.7)]"
+            >
+              {m.text}
+            </div>
+          );
+        }
+        // Show Kitto's face on the first message of each run of her messages.
+        const first = i === 0 || messages[i - 1].role !== "assistant";
+        return (
+          <div key={m.id} className={`flex items-end gap-2 ${first ? "mt-1.5" : ""}`}>
+            {first ? <KittoFace /> : <span className="w-9 shrink-0" aria-hidden="true" />}
+            <div
+              className={`max-w-[84%] break-words rounded-[20px] px-4 py-2.5 text-[15px] leading-snug ${first ? "rounded-bl-md" : ""} ${
+                m.error
+                  ? "bg-rose-50 text-rose-900 ring-1 ring-rose-200"
+                  : "bg-white text-[var(--kitto-ink)] shadow-[0_4px_14px_-8px_rgba(27,21,48,0.25)] ring-1 ring-black/[0.04]"
+              }`}
+            >
+              {renderText(m.text)}
+            </div>
           </div>
-        ) : (
-          <div
-            key={m.id}
-            className={`max-w-[90%] self-start break-words rounded-2xl rounded-bl-md px-3.5 py-2 text-[15px] leading-snug ${
-              m.error ? "bg-red-50 text-red-900" : "bg-[var(--kitto-bubble)] text-[var(--kitto-ink)]"
-            }`}
-          >
-            {renderText(m.text)}
-          </div>
-        ),
-      )}
+        );
+      })}
       {thinking && (
-        <div className="self-start rounded-2xl rounded-bl-md bg-[var(--kitto-bubble)] px-4 py-3" aria-label="Kitto is thinking">
-          <span className="kitto-dots" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
+        <div className="mt-1.5 flex items-end gap-2">
+          <KittoFace />
+          <div className="rounded-[20px] rounded-bl-md bg-white px-4 py-3.5 ring-1 ring-black/[0.04]" aria-label="Kitto is thinking">
+            <span className="kitto-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+          </div>
         </div>
       )}
     </div>

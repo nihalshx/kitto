@@ -10,6 +10,10 @@
   --kitto-navy: #1e1b4b;
   --kitto-bubble: #ffffff;
   --kitto-gradient: linear-gradient(120deg, #1e1b4b 0%, #3b2a8f 55%, #6d4fe0 100%);
+  --kitto-paper: #F8F6F3;
+  --kitto-lav: #DDD7F2;
+  --kitto-lav-soft: #F1EEFA;
+  --kitto-deep: #46416B;
 }
 
 @theme inline {
@@ -36,7 +40,29 @@ body {
 
 .kitto-root {
   color-scheme: light;
-  font-family: var(--font-geist-sans), Arial, Helvetica, "Anek Malayalam", "Noto Sans Malayalam", sans-serif;
+  font-family: var(--font-kitto), var(--font-geist-sans), Arial, Helvetica, "Anek Malayalam", "Noto Sans Malayalam", sans-serif;
+}
+.kitto-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--kitto-ink);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
+  transition: background-color 150ms ease;
+}
+.kitto-icon-btn:hover {
+  background: var(--kitto-lav-soft);
+}
+.kitto-icon-btn:focus-visible {
+  outline: 2px solid var(--kitto-violet);
+  outline-offset: 2px;
+}
+.kitto-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--kitto-lav) transparent;
 }
 
 .kitto-blob {
@@ -58,7 +84,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #9a94ad;
+  background: #B9AEE6;
 }
 
 /* ---------- Kitto rig (v3) ---------- */

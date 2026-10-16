@@ -39,11 +39,11 @@ export default function LeadForm({
   }
 
   const field =
-    "w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-[14px] text-[var(--kitto-ink)] focus:border-[var(--kitto-violet)] focus:outline-none";
+    "w-full rounded-xl bg-[var(--kitto-paper)] px-3 py-2.5 text-[14px] text-[var(--kitto-ink)] ring-1 ring-black/[0.06] focus:bg-white focus:ring-2 focus:ring-[var(--kitto-lav)] focus:outline-none";
 
   return (
-    <form onSubmit={submit} className="mx-4 mb-3 flex flex-col gap-2 rounded-2xl border border-[var(--kitto-violet)]/30 bg-[#f6f3ff] p-3 text-[14px]">
-      <p className="font-semibold text-[var(--kitto-ink)]">Talk to my humans</p>
+    <form onSubmit={submit} className="mx-4 mb-3 ml-[60px] flex flex-col gap-2 rounded-[22px] bg-white p-4 text-[14px] shadow-[0_8px_24px_-12px_rgba(27,21,48,0.3)] ring-1 ring-[var(--kitto-lav)]">
+      <p className="text-[15px] font-extrabold text-[var(--kitto-ink)]">👋 Talk to my humans</p>
       <label className="sr-only" htmlFor="lead-name">Name</label>
       <input id="lead-name" className={field} placeholder="Name *" autoComplete="name" value={values.name} onChange={set("name")} />
       <div className="flex gap-2">
@@ -76,7 +76,7 @@ export default function LeadForm({
       <button
         type="submit"
         disabled={busy}
-        className="rounded-lg bg-[var(--kitto-violet)] py-2 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kitto-violet)] disabled:opacity-50"
+        className="rounded-full bg-[var(--kitto-ink)] py-2.5 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kitto-violet)] disabled:opacity-50"
       >
         {busy ? "Sending…" : "Send to the team"}
       </button>
