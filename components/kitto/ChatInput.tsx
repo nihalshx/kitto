@@ -6,10 +6,13 @@ const MAX = 1000;
 
 export default function ChatInput({
   onSend,
+  onTyping,
   disabled,
   showPrivacy,
 }: {
   onSend: (text: string) => void;
+  /** Called on every keystroke (Kitto watches you type). */
+  onTyping?: () => void;
   disabled?: boolean;
   showPrivacy?: boolean;
 }) {
@@ -41,7 +44,10 @@ export default function ChatInput({
           rows={1}
           maxLength={MAX}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            onTyping?.();
+          }}
           onKeyDown={onKeyDown}
           placeholder="Tell Kitto about your brand…"
           className="max-h-28 min-h-[42px] flex-1 resize-none rounded-xl border border-black/15 bg-white px-3 py-2.5 text-[15px] text-[var(--kitto-ink)] placeholder:text-zinc-500 focus:border-[var(--kitto-violet)] focus:outline-none"

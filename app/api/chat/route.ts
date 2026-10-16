@@ -71,6 +71,8 @@ export async function POST(req: Request) {
       let outputTokens: number | null = null;
       try {
         if (demo) {
+          // A short "thinking" pause so the demo feels like the real thing.
+          await new Promise((r) => setTimeout(r, 700));
           for await (const piece of streamWords(demoReply(body.message, history, body.mode))) {
             if (req.signal.aborted) return;
             const visible = filter.push(piece);

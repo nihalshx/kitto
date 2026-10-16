@@ -9,25 +9,30 @@ A black-cat chat buddy for the Codifykit website: brand ideas, brand therapy, ro
 | 1. Next.js + TS + Tailwind project | Done |
 | 2. Supabase schema migration with RLS | Done (`supabase/migrations/`) |
 | 3. `/api/chat` with streaming + metadata parsing | Done (and `/api/session`) |
-| 4. Chat widget with the black-cat kit avatar (SVG, CSS animation) | Done |
+| 4. Chat widget with the interactive Kitto v3 avatar | Done |
 | 5. `/api/lead`, lead form, email alert | Done (email needs `RESEND_API_KEY`) |
 | 6. Rate limiting + error fallbacks | Done |
 | 7–11 | Not started |
 
-## Kitto artwork
+## Kitto artwork and interactions
 
-`design/kitto-kit/` holds the black-cat kit: the full-body rig SVG (named layers for Rive), expressions, poses, side view, walk and jump frames, and `RIVE_SETUP.md`. `components/kitto/KittoAvatar.tsx` renders the rig directly: blink every 3–6 s, breathing, tail sway, head tilt while thinking, head bob while talking, paw wave on open, a happy bounce, and reduced-motion support.
+`design/kitto-kit-v3/` holds the Kitto Rive kit: front and side rigs, 13 emotions, poses, turnaround, walk cycle, jump and `RIVE_SETUP.md`. `npm run rig` converts `rigs/kitto_front_rig.svg` into `components/kitto/rig.generated.ts`, which `KittoAvatar` renders live: each face is a combination of rig layers (eyes, mouth, effect).
 
-| Kitto mood | Kit face |
+| Moment | Kitto |
 | --- | --- |
-| curious | eyes_default |
-| helpful | eyes_neutral |
-| unimpressed | eyes_sleepy |
-| fluff_cutter | eyes_gold + **red pen** (the kit's knife is not used, per the PRD) |
-| happy | eyes_happy |
-| thinking | eyes_look_right + head tilt |
+| AI mood `curious` / `helpful` | curious eyes, neutral / smiling mouth |
+| `unimpressed` | half-lidded eyes, flat mouth, tail flick |
+| `fluff_cutter` | focused eyes + red pen (never a knife, per PRD), head tilt |
+| `happy` | happy eyes, smile, sparkles, hop |
+| Waiting for the AI | thinking eyes, thought dots, head tilted |
+| Reply streaming | lip-flap and head bob |
+| Error / sensitive / rate limit | sad / gentle / asleep with zzz |
+| Roast score | score stamp; 8+ gets confetti |
+| Lead sent | excited, hop, confetti |
 
-When `kitto.riv` is built from the rig, swap it into `KittoAvatar` and keep this SVG version as the fallback.
+Play: eyes and head follow the pointer, she glances at the input while you type and at chips you hover, tap her for reactions, stroke her to make her purr, tap 6 times quickly for a secret tip, leave her alone for 25 s and she naps (moving wakes her with a start). First visit: she walks along the bottom of the page to the chat button (side-view walk cycle in `public/kitto/walk/`). Idle fidgets: tail flicks, ear twitches, head tilts, looking around. Everything stops for `prefers-reduced-motion`, and jokes stop after a sensitive message.
+
+When `kitto.riv` is built from the rig, it can replace the SVG in `KittoAvatar`; the expression and action names already match the kit's state-machine inputs.
 
 ## Demo mode
 
