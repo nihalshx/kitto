@@ -24,6 +24,20 @@ export interface Store {
   }): Promise<{ assistantMessageId: string | null }>;
   /** Atomically increment today's counter for a key and return the new count. */
   bumpCounter(key: string): Promise<number>;
+  /** Save a lead and mark its conversation. False if the conversation doesn't belong to the visitor. */
+  saveLead(visitorId: string, lead: LeadInput): Promise<boolean>;
+}
+
+export interface LeadInput {
+  conversationId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  business?: string;
+  need?: string;
+  budgetRange?: string;
+  aiSummary?: string;
+  consent: true;
 }
 
 // ---------- Supabase ----------
@@ -117,6 +131,32 @@ const supabaseStore: Store = {
     if (error) throw error;
     return data as number;
   },
+
+  async saveLead(visitorId, lead) {
+    const db = getSupabaseAdmin();
+    const { data: conv, error: convError } = await db
+      .from("conversations")
+      .select("visitor_id")
+      .eq("id", lead.conversationId)
+      .maybeSingle();
+    if (convError) throw convError;
+    if (!conv || conv.visitor_id !== visitorId) return false;
+
+    const { error } = await db.from("leads").insert({
+      conversation_id: lead.conversationId,
+      name: lead.name,
+      email: lead.email ?? null,
+      phone: lead.phone ?? null,
+      business: lead.business ?? null,
+      need: lead.need ?? null,
+      budget_range: lead.budgetRange ?? null,
+      ai_summary: lead.aiSummary ?? null,
+      consent: lead.consent,
+    });
+    if (error) throw error;
+    await db.from("conversations").update({ has_lead: true, last_mood: "happy" }).eq("id", lead.conversationId);
+    return true;
+  },
 };
 
 // ---------- In-memory (local dev without Supabase; resets on restart) ----------
@@ -125,6 +165,7 @@ const mem = {
   visitors: new Set<string>(),
   conversations: new Map<string, { visitorId: string; messages: StoredMessage[] }>(),
   counters: new Map<string, number>(),
+  leads: [] as LeadInput[],
 };
 
 const memoryStore: Store = {
@@ -160,6 +201,11 @@ const memoryStore: Store = {
     const n = (mem.counters.get(k) ?? 0) + 1;
     mem.counters.set(k, n);
     return n;
+  },
+  async saveLead(visitorId, lead) {
+    if (mem.conversations.get(lead.conversationId)?.visitorId !== visitorId) return false;
+    mem.leads.push(lead);
+    return true;
   },
 };
 

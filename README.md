@@ -9,8 +9,14 @@ A black-cat chat buddy for the Codifykit website: brand ideas, brand therapy, ro
 | 1. Next.js + TS + Tailwind project | Done |
 | 2. Supabase schema migration with RLS | Done (`supabase/migrations/`) |
 | 3. `/api/chat` with streaming + metadata parsing | Done (and `/api/session`) |
-| 4. Chat widget (static mood images) | Next |
-| 5–11 | Not started |
+| 4. Chat widget (placeholder SVG moods until the art lands) | Done |
+| 5. `/api/lead`, lead form, email alert | Done (email needs `RESEND_API_KEY`) |
+| 6. Rate limiting + error fallbacks | Done |
+| 7–11 | Not started |
+
+## Demo mode
+
+With `KITTO_DEMO=true`, or with no `ANTHROPIC_API_KEY` set, Kitto answers with scripted replies (`lib/kitto/demo.ts`) instead of calling Claude. Roast, muse, therapy, team, sensitive and Malayalam paths all work, and the header shows a **DEMO** badge. To go live, set a funded `ANTHROPIC_API_KEY`, remove `KITTO_DEMO`, and rebuild (the badge is read at build time).
 
 ## Setup
 
@@ -34,6 +40,8 @@ Without `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`, the API falls back to an i
 | `LEAD_NOTIFY_EMAIL` | Where leads are sent (codifykit@gmail.com) |
 | `KITTO_DAILY_MESSAGE_LIMIT` | Messages per visitor per day (default 40) |
 | `KITTO_DAILY_IP_LIMIT` | Messages per IP per day (default 100) |
+| `KITTO_DEMO` | `true` = scripted demo replies, no Claude calls |
+| `LEAD_FROM_EMAIL` | Sender for lead emails (a domain verified in Resend) |
 | `ADMIN_EMAILS` | Comma-separated emails allowed into `/admin` |
 
 ### Database
@@ -85,6 +93,10 @@ curl -N -XPOST localhost:3000/api/chat -H 'content-type: application/json' \
 ```
 app/api/chat/route.ts       streaming chat endpoint
 app/api/session/route.ts    visitor id
+app/api/lead/route.ts       lead capture (+ Haiku summary, Resend email)
+components/kitto/           widget, avatar, messages, input, chips, lead form
+lib/kitto/demo.ts           scripted replies for demo mode
+lib/kitto/client.ts         browser session + SSE parsing
 lib/kitto/systemPrompt.ts   Kitto system prompt (PRD section 6, verbatim)
 lib/kitto/parseMeta.ts      metadata parsing + stream filter
 lib/kitto/moods.ts          mood ids, colours, Rive numbers

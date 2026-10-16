@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { pickMaxTokens, streamKittoReply, wrapUserMessage } from "@/lib/kitto/anthropic";
+import { demoReply, isDemoMode, streamWords } from "@/lib/kitto/demo";
 import { MODES } from "@/lib/kitto/moods";
 import { MetaStreamFilter } from "@/lib/kitto/parseMeta";
 import { checkRateLimit, clientIp, NAP_MESSAGE } from "@/lib/kitto/rateLimit";
@@ -65,22 +66,38 @@ export async function POST(req: Request) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const filter = new MetaStreamFilter();
+      const demo = isDemoMode();
+      let inputTokens: number | null = null;
+      let outputTokens: number | null = null;
       try {
-        const claude = streamKittoReply(messages, pickMaxTokens(body.message));
-        req.signal.addEventListener("abort", () => claude.abort());
-
-        for await (const event of claude) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            const visible = filter.push(event.delta.text);
+        if (demo) {
+          for await (const piece of streamWords(demoReply(body.message, history, body.mode))) {
+            if (req.signal.aborted) return;
+            const visible = filter.push(piece);
             if (visible) controller.enqueue(sse("text", { text: visible }));
           }
-        }
+        } else {
+          const claude = streamKittoReply(messages, pickMaxTokens(body.message));
+          req.signal.addEventListener("abort", () => claude.abort());
 
-        const final = await claude.finalMessage();
-        if (final.stop_reason === "refusal") {
-          // Any partial text already shown should be replaced by the fallback line.
-          controller.enqueue(sse("error", { message: FALLBACK_LINE, retry: true, discardPartial: true }));
-          return;
+          for await (const event of claude) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              const visible = filter.push(event.delta.text);
+              if (visible) controller.enqueue(sse("text", { text: visible }));
+            }
+          }
+
+          const final = await claude.finalMessage();
+          if (final.stop_reason === "refusal") {
+            // Any partial text already shown should be replaced by the fallback line.
+            controller.enqueue(sse("error", { message: FALLBACK_LINE, retry: true, discardPartial: true }));
+            return;
+          }
+          inputTokens =
+            final.usage.input_tokens +
+            (final.usage.cache_read_input_tokens ?? 0) +
+            (final.usage.cache_creation_input_tokens ?? 0);
+          outputTokens = final.usage.output_tokens;
         }
 
         const { tail, text, meta } = filter.finish();
@@ -94,17 +111,14 @@ export async function POST(req: Request) {
             userMessage: body.message,
             reply,
             meta,
-            inputTokens:
-              final.usage.input_tokens +
-              (final.usage.cache_read_input_tokens ?? 0) +
-              (final.usage.cache_creation_input_tokens ?? 0),
-            outputTokens: final.usage.output_tokens,
+            inputTokens,
+            outputTokens,
           }));
         } catch (err) {
           console.error("[kitto/chat] failed to save exchange", err);
         }
 
-        controller.enqueue(sse("meta", { ...meta, conversationId, messageId }));
+        controller.enqueue(sse("meta", { ...meta, conversationId, messageId, demo }));
       } catch (err) {
         if (req.signal.aborted) return;
         console.error("[kitto/chat] model error", err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err);
