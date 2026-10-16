@@ -511,10 +511,11 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
         >
           {/* Header */}
           <div className="flex items-center gap-2 px-4 py-2.5 text-white" style={{ background: "var(--kitto-gradient)" }}>
-            <span className="text-[17px] font-semibold tracking-tight">Kitto</span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
+            <img src="/kitto/logo-kitto-white.png" alt="Kitto" width={64} height={22} className="h-[22px] w-auto" />
             <span className="rounded-md bg-white/20 px-1.5 py-0.5 text-[11px] font-bold tracking-wide">AI</span>
             {demo && <span className="rounded-md bg-amber-300 px-1.5 py-0.5 text-[11px] font-bold text-amber-950">DEMO</span>}
-            <span className="ml-1 truncate text-[12px] text-white/70">brand buddy by Codifykit</span>
+            <span className="ml-1 truncate text-[12px] text-white/70">by Codifykit</span>
             <button
               type="button"
               onClick={toggleSound}

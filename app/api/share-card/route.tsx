@@ -35,6 +35,7 @@ export async function GET(req: Request) {
 
   const svg = await readFile(join(process.cwd(), "public/kitto/card", `kitto_${faceFor(score)}.svg`), "base64");
   const kitto = `data:image/svg+xml;base64,${svg}`;
+  const logo = `data:image/png;base64,${await readFile(join(process.cwd(), "public/kitto/logo-kitto.png"), "base64")}`;
   const raw = line.length > 0 ? line : "Short, clear, honest. That's the bar.";
   // Don't double up quotes when the verdict already starts with a quoted word.
   const verdict = /^["“]/.test(raw) ? raw : `“${raw}”`;
@@ -66,7 +67,11 @@ export async function GET(req: Request) {
           }}
         />
 
-        <div style={{ display: "flex", fontSize: 40, fontWeight: 700, letterSpacing: 6, color: VIOLET }}>KITTO ROAST</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- rendered by Satori, not the browser */}
+          <img src={logo} width={190} height={64} alt="Kitto" />
+          <div style={{ display: "flex", fontSize: 36, letterSpacing: 6, color: VIOLET, marginTop: 10 }}>ROAST</div>
+        </div>
         <div style={{ display: "flex", fontSize: 76, fontWeight: 800, lineHeight: 1.05, marginTop: 18, maxWidth: 720 }}>
           {headlineFor(score)}
         </div>
