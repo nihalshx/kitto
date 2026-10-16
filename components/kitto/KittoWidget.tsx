@@ -412,10 +412,10 @@ export default function KittoWidget({ demoMode = false }: { demoMode?: boolean }
             onPointerEnter={() => setLauncherHover(true)}
             onPointerLeave={() => setLauncherHover(false)}
             aria-label="Chat with Kitto"
-            className={`kitto-launcher grid h-16 w-16 place-items-center overflow-hidden rounded-full shadow-xl ring-2 ring-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--kitto-violet)] ${arrived ? "is-arriving" : ""}`}
-            style={{ background: "var(--kitto-gradient)" }}
+            className={`kitto-launcher grid h-16 w-16 place-items-center overflow-hidden rounded-full shadow-xl ring-2 ring-[var(--kitto-violet)]/40 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--kitto-violet)] ${arrived ? "is-arriving" : ""}`}
+            style={{ background: "radial-gradient(circle at 50% 40%, #EEEAF9 0%, #DDD7F2 70%)" }}
           >
-            <KittoAvatar expression={launcherExpression} crop="head" fidget={!asleep} className="mt-3 h-[64px] w-[64px]" />
+            <KittoAvatar expression={launcherExpression} crop="head" fidget={!asleep} className="mt-1 h-[62px] w-[62px]" />
           </button>
         </div>
       )}

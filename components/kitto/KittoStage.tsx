@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { Action, Expression } from "@/lib/kitto/expressions";
+import { STAGE_BACKGROUND } from "@/lib/kitto/moods";
 import KittoAvatar, { type LookTarget } from "./KittoAvatar";
 
 const CONFETTI_COLORS = ["#F7D64A", "#B9AEE6", "#E5A0A7", "#ffffff", "#9FB08A", "#6d4fe0"];
@@ -69,9 +70,15 @@ export default function KittoStage(props: StageProps) {
     <div
       onClick={onTap}
       className="kitto-stage relative flex h-[120px] shrink-0 cursor-pointer select-none justify-center overflow-hidden sm:h-[180px]"
-      style={{ backgroundColor: background }}
+      style={{ backgroundColor: STAGE_BACKGROUND }}
     >
-      <div className="kitto-grain pointer-events-none absolute inset-0" aria-hidden="true" />
+      {/* Mood-tinted circle behind Kitto, as on the character sheet */}
+      <div
+        className="kitto-blob pointer-events-none absolute top-3 h-[150px] w-[150px] rounded-full sm:top-4 sm:h-[220px] sm:w-[220px]"
+        style={{ backgroundColor: background }}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none absolute -bottom-2 h-4 w-[120px] rounded-[50%] bg-[#DDD7F2]/70 blur-[2px] sm:w-[170px]" aria-hidden="true" />
 
       <div key={popKey} className="kitto-pop absolute -bottom-1 h-[124px] w-[116px] sm:h-[186px] sm:w-[174px]">
         <KittoAvatar {...avatar} crop="bust" className="h-full w-full" />
@@ -80,7 +87,7 @@ export default function KittoStage(props: StageProps) {
       {bubble && (
         <div
           key={bubble.id}
-          className="kitto-bubble-pop pointer-events-none absolute top-3 left-[calc(50%+52px)] rounded-2xl rounded-bl-sm bg-white px-3 py-1.5 text-[13px] font-semibold text-[var(--kitto-ink)] shadow-md sm:left-[calc(50%+76px)] sm:top-6"
+          className="kitto-bubble-pop pointer-events-none absolute top-3 left-[calc(50%+52px)] rounded-2xl rounded-bl-sm bg-white px-3 py-1.5 text-[13px] font-semibold text-[var(--kitto-ink)] shadow-md ring-1 ring-black/5 sm:left-[calc(50%+76px)] sm:top-6"
           aria-hidden="true"
         >
           {bubble.text}
@@ -90,7 +97,7 @@ export default function KittoStage(props: StageProps) {
       {score !== null && (
         <div
           key={`score-${score}-${popKey}`}
-          className="kitto-stamp pointer-events-none absolute top-3 left-4 grid h-16 w-16 rotate-[-8deg] place-items-center rounded-full border-4 border-white/90 bg-black/25 text-white shadow-lg backdrop-blur-[1px] sm:top-5 sm:h-20 sm:w-20"
+          className="kitto-stamp pointer-events-none absolute top-3 left-4 grid h-16 w-16 rotate-[-8deg] place-items-center rounded-full border-[3px] border-[var(--kitto-violet)] bg-white text-[var(--kitto-violet)] shadow-md sm:top-5 sm:h-20 sm:w-20"
           aria-hidden="true"
         >
           <span className="text-center leading-none">
@@ -103,7 +110,7 @@ export default function KittoStage(props: StageProps) {
       {confetti !== null && <Confetti key={confetti} seed={confetti} />}
 
       {hint && (
-        <span className="pointer-events-none absolute right-3 bottom-2 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white/95">
+        <span className="pointer-events-none absolute right-3 bottom-2 rounded-full bg-[#DDD7F2] px-2 py-0.5 text-[11px] font-medium text-[#46416B]">
           tap or pet me
         </span>
       )}

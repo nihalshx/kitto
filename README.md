@@ -24,6 +24,8 @@ A black-cat chat buddy for the Codifykit website: brand ideas, brand therapy, ro
 | `unimpressed` | half-lidded eyes, flat mouth, tail flick |
 | `fluff_cutter` | focused eyes + red pen (never a knife, per PRD), head tilt |
 | `happy` | happy eyes, smile, sparkles, hop |
+
+The stage follows the v3 character sheet: an off-white backdrop with a soft circle behind Kitto whose tint shows the mood (lavender curious, sage helpful, rose unimpressed, butter fluff-cutter, bright lavender happy).
 | Waiting for the AI | thinking eyes, thought dots, head tilted |
 | Reply streaming | lip-flap and head bob |
 | Error / sensitive / rate limit | sad / gentle / asleep with zzz |

@@ -29,6 +29,8 @@ function withMeta(text: string, meta: DemoMeta): string {
 function detectMode(message: string, picked?: Mode): Mode {
   const m = message.toLowerCase();
   if (/(price|pricing|cost|quote|how much|budget|timeline|can you build|hire|talk to the team)/.test(m)) return "team";
+  // An explicit roast request wins over the mode chip picked earlier.
+  if (/^\s*(roast|rate my|critique)/.test(m)) return "roast";
   if (picked) return picked;
   if (/(roast|bio|tagline|caption:|critique|rate my)/.test(m)) return "roast";
   if (/(idea|hook|caption|content|post|reel|plan|write one)/.test(m)) return "muse";
